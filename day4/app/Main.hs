@@ -69,9 +69,6 @@ searchUpdateBoard n (Board lines) | isUpdated = (maybeBoardSum, board')
                                           board' = Board (map snd updatedLines)
                                           maybeBoardSum = checkBoard board'
 
-checkUpdates :: [(Bool,[Int])] -> Bool
-checkUpdates = all fst
-
 searchUpdateCheckLine :: Int -> [Int] -> (Bool,[Int])
 searchUpdateCheckLine n line = (status,line')
                               where (status,line') = foldr (searchUpdateCheckLine' n) (False,[]) line
