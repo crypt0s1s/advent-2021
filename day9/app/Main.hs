@@ -6,7 +6,6 @@ import Lib
 import qualified Data.Map.Strict as Map
 import Data.Char ( digitToInt )
 import Data.Maybe ( mapMaybe )
-import Debug.Trace ( traceShowId )
 import Data.List ( sort )
 
 main :: IO ()
@@ -44,9 +43,9 @@ isLow m (x,y) rating = all (rating <) adjacentPointsRatings
 
 -- Finds the 3 largest basins and calculates the product
 findTop3BasinSizesProduct :: DangerMap -> Int
-findTop3BasinSizesProduct dMap = product $ traceShowId $ take 3 $ reverse $ sort $ map snd $ Map.toList $ countMap pointList
+findTop3BasinSizesProduct dMap = product $ take 3 $ reverse $ sort $ map snd $ Map.toList $ countMap pointList
                       where
-                          basinMap = traceShowId $ makeBasinMap dMap
+                          basinMap =  makeBasinMap dMap
                           pointList = map snd $ Map.toList basinMap
 
 -- creates a map counting how many instances of each point there is
