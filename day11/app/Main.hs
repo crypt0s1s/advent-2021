@@ -18,8 +18,6 @@ main = do
     print $ countExplosionsToN (createEnergyGrid inp) 100 0
     print $ findSyncExplosion (createEnergyGrid inpTest) 0 0
     print $ findSyncExplosion (createEnergyGrid inp) 0 0
-    -- print $ part1 inpTest
-
 
 createEnergyGrid :: [String] -> EnergyGrid
 createEnergyGrid ls = Map.fromList pointEnergyTuples
@@ -35,7 +33,6 @@ countExplosionsToN _ 0 explosions = explosions
 countExplosionsToN eGrid n explosions = countExplosionsToN updatedGrid (n - 1) (explosions + explosionsInStep)
                                        where
                                            (explosionsInStep, updatedGrid) = takeStep eGrid
-
 
 findSyncExplosion :: EnergyGrid -> Int -> Explosions -> Int
 findSyncExplosion _ n 100 = n
