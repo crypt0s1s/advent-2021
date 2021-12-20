@@ -1,11 +1,9 @@
 module Main where
 
 import Lib ()
-import Data.List.Split
 import Data.Char (digitToInt)
-import Data.Either
-import Data.Maybe
-import Debug.Trace
+import Data.Either ( rights )
+import Data.Maybe ( fromJust )
 
 data SnailMath = Lit Int | Pair Int SnailMath SnailMath
 
@@ -22,6 +20,7 @@ main = do
 
 p1 :: [SnailMath] -> SnailMath
 p1 (sm:sms) = foldl addSnailMath sm sms
+p1 [] = error "Not a valid input"
 
 p2 :: [SnailMath] -> Int
 p2 sms = maximum [calcMagnitude (addSnailMath s s') | (s,n) <- sms', (s',n') <- sms', n /= n']
