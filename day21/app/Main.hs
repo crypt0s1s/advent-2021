@@ -17,12 +17,6 @@ data Turn = P1 | P2
 data Player = Player Position Score
 data Game = Game Rolls Turn Player Player
 
-data QuantumGame  = QG QMap Player Player
-
-type UnknownMap = Map.Map (Player,Player) (Int)
-
-type UniverseMap = Map.Map (Player,Player) (Int,Int)
-
 type QMap = Map.Map (Player,Player) (Int,Int)
 
 instance Eq Turn where
@@ -44,11 +38,6 @@ p1 = (,) r losingPlayersPoints
     where
         (Game r _ p1 p2) = playGame (Game 0 P1 (Player 1 0) (Player 2 0))
         losingPlayersPoints = findLowestPoints p1 p2
-
-samp :: [((Int, Int),(Int,Int))]
-samp = [ (a,b) | a <- ls, b <- ls]
-    where
-     ls = [ (pos,score) | pos <- [1 .. 10], score <- [0 .. 20] ]
 
 findLowestPoints :: Player -> Player -> Int
 findLowestPoints (Player _ s) (Player _ s') | s > s' = s'
@@ -87,14 +76,11 @@ rollDice :: Int -> Int
 rollDice x = sum $ take 3 nums
             where nums = [x .. 100] ++ [1 .. 99]
 
+p2 :: (Int,Int)
+p2 = playQuantumGame (Map.singleton (Player 1 0, Player 2 0) (1,0)) (0,0)
 
 rollQuantum :: [(Int,Int)]
 rollQuantum = [(3,1),(4,3),(5,6),(6,7),(7,6),(8,3),(9,1)]
-
-
-
-p2 :: (Int,Int)
-p2 = playQuantumGame (Map.singleton (Player 1 0, Player 2 0) (1,0)) (0,0)
 
 playQuantumGame :: QMap -> (Int,Int) -> (Int,Int)
 playQuantumGame qMap (s1,s2) | Map.null qMap = (s1,s2)
@@ -108,7 +94,6 @@ playQuantumGame' qMap = (updatedQMap,wUv)
                                       (lowestElm,rest) = Map.splitAt 1 qMap
                                       [((p1,p2),uv)] = Map.toList lowestElm
                                       (updatedQMap,wUv) = takeQuantumTurn uv p1 p2 rest 
-
 
 takeQuantumTurn :: (Int,Int) -> Player -> Player -> QMap -> (QMap,(Int,Int))
 takeQuantumTurn (r1,r2) (Player p s) p2 qMap = (updatedQMap,(r1 * t, r2 * t))
@@ -127,42 +112,5 @@ findNewPos :: Int -> Int -> Int
 findNewPos p r | (p + r) `mod` 10 == 0 = 10
                | otherwise = (p + r) `mod` 10
 
-
 winningScore :: Int
 winningScore = 21
-
--- takeQuantumTurn :: QuantumGame -> QuantumGame
--- takeQuantumTurn (QG mk mu p1 p2) = undefined 
-
-
--- winningUniverses :: 
-
-
-{-
-for each roll
-  if outcome is in map
-    
-
--}
-
-
-
--- winningUniversesFromPos :: Player -> Player -> Int
--- winningUniversesFromPos (Player p s) (Player p' s') | 
---               where
---                   potentialScores = map ((\x -> if x == 0 then 10 else x) . (`mod` 10)) [p .. p + 2]
-
--- -- n s 
-
-
--- winningUniversesFromPos20 :: Player -> Player -> Int
--- winningUniversesFromPos20 (Player p s) (Player p' s') = 3
-
--- winningUniversesFromPos19 :: Player -> Player -> Int
--- winningUniversesFromPos19 (Player p s) (Player p' s') | p > 1 && p < 9 = 3 
-                                                    --   | s' < 10 || s' + maximum [p' .. p' + 2] = 9
-                                                    --   | 
-
-
-
-
