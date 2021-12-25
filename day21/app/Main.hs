@@ -28,7 +28,7 @@ instance Eq Player where
     Player p1 s1 == Player p2 s2 = p1 == p2 && s1 == s2
 
 instance Ord Player where
-    Player p1 s1 <= Player p2 s2 = p2 > p1 || (p2 == p1 && s2 >= s1)
+    Player p1 s1 <= Player p2 s2 = s2 > s1 || (s2 == s1 && p2 >= p1)
 
 instance Show Player where
     show (Player p s) = "Player: pos " ++ show p ++ " score " ++ show s
@@ -95,6 +95,9 @@ playQuantumGame' qMap = (updatedQMap,wUv)
                                       [((p1,p2),uv)] = Map.toList lowestElm
                                       (updatedQMap,wUv) = takeQuantumTurn uv p1 p2 rest 
 
+
+-- r1,r2 stand for reached player 1 and reached player 2, aka the number of times
+-- that each player reached that particular state
 takeQuantumTurn :: (Int,Int) -> Player -> Player -> QMap -> (QMap,(Int,Int))
 takeQuantumTurn (r1,r2) (Player p s) p2 qMap = (updatedQMap,(r1 * t, r2 * t))
                              where
@@ -109,8 +112,7 @@ addTuples :: (Int,Int) -> (Int,Int) -> (Int,Int)
 addTuples (a,b) (a',b') = (a + a', b + b')
 
 findNewPos :: Int -> Int -> Int
-findNewPos p r | (p + r) `mod` 10 == 0 = 10
-               | otherwise = (p + r) `mod` 10
+findNewPos p r = 1 + ((p + r - 1) `mod` 10)
 
 winningScore :: Int
 winningScore = 21
