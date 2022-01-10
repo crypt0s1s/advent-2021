@@ -15,6 +15,7 @@ data Amphipod = A Position |
                 deriving (Eq,Show)
 
 type Cost = Int
+type Depth = Int
 type BurrowMap = M.Map Position Char
 type VisitedSet = S.Set BurrowMap
 type Move = (Amphipod,Amphipod,Cost)
@@ -28,12 +29,6 @@ type PQ = Q.MinQueue State
 
 instance Ord State where
     s1 <= s2 = currentCost s1 + minExtraCost s1 <= currentCost s2 + minExtraCost s2
-
-endMap :: BurrowMap
-endMap = M.fromList [((2,1),'A'),((2,2),'A'),((4,1),'B'),((4,2),'B'),((6,1),'C'),((6,2),'C'),((8,1),'D'),((8,2),'D')]
-
-endMap2 :: BurrowMap
-endMap2 = M.fromList [((2,1),'A'),((2,2),'A'),((2,3),'A'),((2,4),'A'),((4,1),'B'),((4,2),'B'),((4,3),'B'),((4,4),'B'),((6,1),'C'),((6,2),'C'),((6,3),'C'),((6,4),'C'),((8,1),'D'),((8,2),'D'),((8,3),'D'),((8,4),'D')]
 
 initialiseBurrowMap :: [Amphipod] -> BurrowMap
 initialiseBurrowMap amphipods = M.fromList amphipods'
@@ -77,55 +72,35 @@ getCost apod dest | t == 'A' = 1 * cost
 findCost :: Position -> Position -> Int
 findCost (x,y) (x',y') | x == x' && y == y' = 0
                        | otherwise = abs (x - x') + y + y'
-{-
-findValidMoves :: BurrowMap -> Amphipod -> [Move]
-findValidMoves bMap amphipod | inRoom && (finalPos || stuck) = []
-                             | inRoom && isHomeRoomAvailable && canMoveToHomeRoomFromRoom = [homeRoomMove] 
-                             | inRoom = validHallwayMoves
-                             | isHomeRoomAvailable && canMoveToHomeRoom = [homeRoomMove]
-                             | otherwise = []
-                               where
-                                   (x,y) = getPos amphipod
-                                   inRoom = y > 0
-                                   homeX = getHomeX amphipod
-                                   amphipodType = getType amphipod
-                                   finalPos = x == homeX && (y == 2 || (y == 1 && Just amphipodType == bMap M.!? (homeX,2)))
-                                   stuck = y == 2 && M.member (x,1) bMap
 
-                                   isHomeRoomAvailable = (M.notMember (homeX,2) bMap && M.notMember (homeX,1) bMap) || (bMap M.!? (homeX,2) == Just amphipodType && M.notMember (homeX,1) bMap)
-                                   canMoveToHomeRoomFromRoom = all (\x' -> M.notMember (x',0) bMap) $ enumFromThenTo (min x homeX + 1) (min x homeX + 3) (max x homeX - 1)
-                                   homeRoomMove | M.member (homeX,2) bMap = (amphipod,createAmphipod amphipodType (homeX,1), getCost amphipod (homeX,1))
-                                                | otherwise = (amphipod,createAmphipod amphipodType (homeX,2), getCost amphipod (homeX,2))
- 
-                                   (hallwayBehind,hallwayInfront) = break (> x) [0,1,3,5,7,9,10]
-                                   validHallwayBehind = takeWhile (\n -> M.notMember (n,0) bMap) (reverse hallwayBehind)
-                                   validHallwayInfront = takeWhile (\n -> M.notMember (n,0) bMap) hallwayInfront
-                                   validHallwayMoves = map (\p -> (amphipod,createAmphipod amphipodType p, getCost amphipod p)) $ zip (validHallwayBehind ++ validHallwayInfront) (repeat 0)
+inHomeRoom :: Amphipod -> Bool
+inHomeRoom (A (x,y)) = x == 2
+inHomeRoom (B (x,y)) = x == 4
+inHomeRoom (C (x,y)) = x == 6
+inHomeRoom (D (x,y)) = x == 8
 
-                                   canMoveToHomeRoom | x < homeX = all (\x' -> M.notMember (x',0) bMap) $ enumFromThenTo (x + 2) (x + 4) (homeX - 1)
-                                                     | otherwise = all (\x' -> M.notMember (x',0) bMap) $ enumFromThenTo (homeX + 1) (homeX + 3) (x - 2)
--}
 main :: IO ()
 main = do
+    print p1
     print p2
 
 p1 :: Int
-p1 = aStarSearch pq S.empty
+p1 = aStarSearch 2 pq S.empty
      where
          pq = Q.singleton initialState
 
 p1Test :: Int
-p1Test = aStarSearch pq S.empty
+p1Test = aStarSearch 2 pq S.empty
          where
              pq = Q.singleton initialTestState
 
 p2 :: Int
-p2 = aStarSearch pq S.empty
+p2 = aStarSearch 4 pq S.empty
      where
          pq = Q.singleton initialState2
 
 p2Test :: Int
-p2Test = aStarSearch pq S.empty
+p2Test = aStarSearch 4 pq S.empty
          where
              pq = Q.singleton initialTestState2
 
@@ -170,24 +145,6 @@ updateState s (aInit,aFinal,c) = State updatedBMap (c + currentCost s) newMinCos
                                  where
                                     updatedBMap = updateBMap (mp s) aInit aFinal
                                     newMinCost = findMinCost updatedBMap
-{-
-findMinCost :: BurrowMap -> Int
-findMinCost bMap = at + bt + ct + dt
-                         where
-                             apods = aimphipodsFromMap bMap
-                             as = filter (\t -> getType t == 'A') apods
-                             bs = filter (\t -> getType t == 'B') apods
-                             cs = filter (\t -> getType t == 'C') apods
-                             ds = filter (\t -> getType t == 'D') apods
-                             at | getPos (as !! 0) == (2,2) = (getCost (as !! 0) (2,2)) + (getCost (as !! 1) (2,1))
-                                | otherwise = (getCost (as !! 0) (2,1)) + (getCost (as !! 1) (2,2))
-                             bt | getPos (bs !! 0) == (4,2) = (getCost (bs !! 0) (4,2)) + (getCost (bs !! 1) (4,1))
-                                | otherwise = (getCost (bs !! 0) (4,1)) + (getCost (bs !! 1) (4,2))
-                             ct | getPos (cs !! 0) == (6,2) = (getCost (cs !! 0) (6,2)) + (getCost (cs !! 1) (6,1))
-                                | otherwise = (getCost (cs !! 0) (6,1)) + (getCost (cs !! 1) (6,2))
-                             dt | getPos (ds !! 0) == (8,2) = (getCost (ds !! 0) (8,2)) + (getCost (ds !! 1) (8,1))
-                                | otherwise = (getCost (ds !! 0) (8,1)) + (getCost (ds !! 1) (8,2))
--}
 
 findMinCost :: BurrowMap -> Int
 findMinCost bMap = sum $ map findCost' apods
@@ -204,64 +161,42 @@ findCost' (C p) | fst p == 6 = 0
 findCost' (D p) | fst p == 8 = 0
                 | otherwise = getCost (D p) (8,0)
 
-aStarSearch :: PQ -> VisitedSet -> Int
-aStarSearch pq visited | bMap == endMap2 = currentCost popped
-                       | S.member bMap visited = aStarSearch restPQ visited
-                       | otherwise = aStarSearch updatedPQ (S.insert bMap visited)
-                         where
-                            (popped,restPQ) = Q.deleteFindMin pq
-                            bMap = mp popped
-                            aimphipods = aimphipodsFromMap bMap
-                            moves = concatMap (findValidMoves bMap) aimphipods
-                            futureStates = map (updateState popped) moves
-                            updatedPQ = foldr Q.insert restPQ futureStates
-
-deepestRoom :: Int
-deepestRoom = 4
-
-findValidMoves :: BurrowMap -> Amphipod -> [Move]
-findValidMoves bMap amphipod | inRoom && (finalPos || stuck) = []
-                             | inRoom && isHomeRoomAvailable && canMoveToHomeRoomFromRoom = [homeRoomMove]
-                             | inRoom = validHallwayMoves
-                             | isHomeRoomAvailable && canMoveToHomeRoom = [homeRoomMove]
-                             | otherwise = []
+aStarSearch :: Depth -> PQ -> VisitedSet -> Int
+aStarSearch depth pq visited | all inHomeRoom aimphipods = currentCost popped
+                             | S.member bMap visited = aStarSearch depth restPQ visited
+                             | otherwise = aStarSearch depth updatedPQ (S.insert bMap visited)
                                where
-                                   (x,y) = getPos amphipod
-                                   inRoom = y > 0
-                                   homeX = getHomeX amphipod
-                                   amphipodType = getType amphipod
-                                   finalPos = x == homeX && all (\y' -> Just amphipodType == bMap M.!? (homeX,y')) [y + 1 .. deepestRoom]
-                                   stuck = y > 1 && any (\y' -> M.member (x,y') bMap) [1 .. y - 1]
+                                  (popped,restPQ) = Q.deleteFindMin pq
+                                  bMap = mp popped
+                                  aimphipods = aimphipodsFromMap bMap
+                                  moves = concatMap (findValidMoves depth bMap) aimphipods
+                                  futureStates = map (updateState popped) moves
+                                  updatedPQ = foldr Q.insert restPQ futureStates
 
-                                   isHomeRoomAvailable = all (\y' -> M.findWithDefault amphipodType (homeX,y') bMap == amphipodType) [1 .. deepestRoom]
-                                   canMoveToHomeRoomFromRoom = all (\x' -> M.notMember (x',0) bMap) $ enumFromThenTo (min x homeX + 1) (min x homeX + 3) (max x homeX - 1)
+findValidMoves :: Depth -> BurrowMap -> Amphipod -> [Move]
+findValidMoves depth bMap amphipod | inRoom && (finalPos || stuck) = []
+                                   | inRoom && isHomeRoomAvailable && canMoveToHomeRoomFromRoom = [homeRoomMove]
+                                   | inRoom = validHallwayMoves
+                                   | isHomeRoomAvailable && canMoveToHomeRoom = [homeRoomMove]
+                                   | otherwise = []
+                                     where
+                                         (x,y) = getPos amphipod
+                                         inRoom = y > 0
+                                         homeX = getHomeX amphipod
+                                         amphipodType = getType amphipod
+                                         finalPos = x == homeX && all (\y' -> Just amphipodType == bMap M.!? (homeX,y')) [y + 1 .. depth]
+                                         stuck = y > 1 && any (\y' -> M.member (x,y') bMap) [1 .. y - 1]
 
-                                   homeRoomMoveDest = head $ filter (`M.notMember` bMap) $ zip (repeat homeX) $ enumFromThenTo deepestRoom (deepestRoom - 1) 1
-                                   homeRoomMove = (amphipod,createAmphipod amphipodType homeRoomMoveDest, getCost amphipod homeRoomMoveDest)
+                                         isHomeRoomAvailable = all (\y' -> M.findWithDefault amphipodType (homeX,y') bMap == amphipodType) [1 .. depth]
+                                         canMoveToHomeRoomFromRoom = all (\x' -> M.notMember (x',0) bMap) $ enumFromThenTo (min x homeX + 1) (min x homeX + 3) (max x homeX - 1)
 
-                                   (hallwayBehind,hallwayInfront) = break (> x) [0,1,3,5,7,9,10]
-                                   validHallwayBehind = takeWhile (\n -> M.notMember (n,0) bMap) (reverse hallwayBehind)
-                                   validHallwayInfront = takeWhile (\n -> M.notMember (n,0) bMap) hallwayInfront
-                                   validHallwayMoves = zipWith (curry (\p -> (amphipod,createAmphipod amphipodType p, getCost amphipod p))) (validHallwayBehind ++ validHallwayInfront) (repeat 0)
+                                         homeRoomMoveDest = head $ filter (`M.notMember` bMap) $ zip (repeat homeX) $ enumFromThenTo depth (depth - 1) 1
+                                         homeRoomMove = (amphipod,createAmphipod amphipodType homeRoomMoveDest, getCost amphipod homeRoomMoveDest)
 
-                                   canMoveToHomeRoom | x < homeX = all (\x' -> M.notMember (x',0) bMap) $ enumFromThenTo (x + 2) (x + 4) (homeX - 1)
-                                                     | otherwise = all (\x' -> M.notMember (x',0) bMap) $ enumFromThenTo (homeX + 1) (homeX + 3) (x - 2)
+                                         (hallwayBehind,hallwayInfront) = break (> x) [0,1,3,5,7,9,10]
+                                         validHallwayBehind = takeWhile (\n -> M.notMember (n,0) bMap) (reverse hallwayBehind)
+                                         validHallwayInfront = takeWhile (\n -> M.notMember (n,0) bMap) hallwayInfront
+                                         validHallwayMoves = map (\x' -> (amphipod,createAmphipod amphipodType (x',0), getCost amphipod (x',0))) (validHallwayBehind ++ validHallwayInfront)
 
-
-
-{-
-aStarSearch :: CavernMap -> PQ -> VistedPoints -> Position -> Int
-aStarSearch cMap pq vPoints target | position minElment == target = riskTotal minElment -- if element is the destination
-                                   | Set.member (position minElment) vPoints = aStarSearch cMap restPQ vPoints target -- if element has been visited already skip
-                                   | otherwise = aStarSearch cMap updatedPQ vPoints' target
-                             where
-                                (minElment,restPQ) = Q.deleteFindMin pq
-                                adjacentPointsPos =  map (tupleAdd $ position minElment) [(0,1),(1,0),(-1,0),(0,-1)]
-                                adjacentPoints = zip adjacentPointsPos $ map (cMap Map.!?) adjacentPointsPos
-                                adjacentPoints' = filter (\p -> isJust (snd p) && notVisited vPoints p) adjacentPoints
-                                updatedPQ = foldr (\(p,Just r) -> Q.insert (createPositionCost p target r (riskTotal minElment))) restPQ adjacentPoints'
-                                vPoints' = Set.insert (position minElment) vPoints
--}
-
-
-
+                                         canMoveToHomeRoom | x < homeX = all (\x' -> M.notMember (x',0) bMap) $ enumFromThenTo (x + 2) (x + 4) (homeX - 1)
+                                                           | otherwise = all (\x' -> M.notMember (x',0) bMap) $ enumFromThenTo (homeX + 1) (homeX + 3) (x - 2)
