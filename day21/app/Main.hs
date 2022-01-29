@@ -82,6 +82,7 @@ p2 = playQuantumGame (Map.singleton (Player 1 0, Player 2 0) (1,0)) (0,0)
 rollQuantum :: [(Int,Int)]
 rollQuantum = [(3,1),(4,3),(5,6),(6,7),(7,6),(8,3),(9,1)]
 
+-- s1 & s2 represent the number of times p1 and p2 respectively have won from the computed states
 playQuantumGame :: QMap -> (Int,Int) -> (Int,Int)
 playQuantumGame qMap (s1,s2) | Map.null qMap = (s1,s2)
                              | otherwise = playQuantumGame updatedQMap (s1 + s1', s2 + s2')
@@ -89,21 +90,20 @@ playQuantumGame qMap (s1,s2) | Map.null qMap = (s1,s2)
                                    (updatedQMap,(s1',s2')) = playQuantumGame' qMap
 
 playQuantumGame' :: QMap -> (QMap,(Int,Int))
-playQuantumGame' qMap = (updatedQMap,wUv)
+playQuantumGame' qMap = (updatedQMap,winningUniverses)
                                   where
                                       (lowestElm,rest) = Map.splitAt 1 qMap
                                       [((p1,p2),uv)] = Map.toList lowestElm
-                                      (updatedQMap,wUv) = takeQuantumTurn uv p1 p2 rest 
-
+                                      (updatedQMap,winningUniverses) = takeQuantumTurn uv p1 p2 rest 
 
 -- r1,r2 stand for reached player 1 and reached player 2, aka the number of times
 -- that each player reached that particular state
 takeQuantumTurn :: (Int,Int) -> Player -> Player -> QMap -> (QMap,(Int,Int))
-takeQuantumTurn (r1,r2) (Player p s) p2 qMap = (updatedQMap,(r1 * t, r2 * t))
+takeQuantumTurn (r1,r2) (Player p s) p2 qMap = (updatedQMap,(r1 * total, r2 * total))
                              where
                                 newPositions = map (\(a,b) -> (findNewPos p a,b)) rollQuantum
                                 knownWinningPositions = filter (\x -> fst x + s >= winningScore) newPositions
-                                t = sum (map snd knownWinningPositions) 
+                                total = sum (map snd knownWinningPositions) 
 
                                 unknownPositions = filter (\x -> fst x + s < winningScore) newPositions 
                                 updatedQMap = foldr (\(a,b) m -> Map.insertWith addTuples (p2, Player a (a + s)) (r2 * b, r1 * b) m) qMap unknownPositions
@@ -112,7 +112,7 @@ addTuples :: (Int,Int) -> (Int,Int) -> (Int,Int)
 addTuples (a,b) (a',b') = (a + a', b + b')
 
 findNewPos :: Int -> Int -> Int
-findNewPos p r = 1 + ((p + r - 1) `mod` 10)
+findNewPos pos roll = 1 + ((pos + roll - 1) `mod` 10)
 
 winningScore :: Int
 winningScore = 21
